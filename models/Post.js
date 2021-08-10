@@ -3,7 +3,7 @@ const sequelize = require("../config/connection");
 
 // create our Post model
 class Post extends Model {
-  // JavaScript built in stack keyword to indicate upvote is based on the post model.
+  // JavaScript built in static keyword to indicate upvote is based on the post model.
   static upvote(body, models) {
     return models.Vote.create({
       user_id: body.user_id,

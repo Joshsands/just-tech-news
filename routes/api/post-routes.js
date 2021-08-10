@@ -1,19 +1,33 @@
 const sequelize = require("../../config/connection");
 const router = require("express").Router();
-const { Post, User, Vote } = require("../../models");
+const { Post, User, Vote, Comment } = require("../../models");
 
 // get all users
 router.get("/", (req, res) => {
   Post.findAll({
+    order: [["created_at", "DESC"]],
     attributes: [
       "id",
       "post_url",
       "title",
       "created_at",
-      [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
+      [
+        sequelize.literal(
+          "(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)"
+        ),
+        "vote_count",
+      ],
     ],
-    order: [["created_at", "DESC"]],
     include: [
+      // include the Comment model here:
+      {
+        model: Comment,
+        attributes: ["id", "comment_text", "post_id", "user_id", "created_at"],
+        include: {
+          model: User,
+          attributes: ["username"],
+        },
+      },
       {
         model: User,
         attributes: ["username"],
@@ -37,9 +51,23 @@ router.get("/:id", (req, res) => {
       "post_url",
       "title",
       "created_at",
-    [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
-  ],
+      [
+        sequelize.literal(
+          "(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)"
+        ),
+        "vote_count",
+      ],
+    ],
     include: [
+      // include the Comment model here:
+      {
+        model: Comment,
+        attributes: ["id", "comment_text", "post_id", "user_id", "created_at"],
+        include: {
+          model: User,
+          attributes: ["username"],
+        },
+      },
       {
         model: User,
         attributes: ["username"],
@@ -77,12 +105,12 @@ router.post("/", (req, res) => {
 router.put("/upvote", (req, res) => {
   // create the vote
   Post.upvote(req.body, { Vote })
-      .then((dbPostData) => res.json(dbPostData))
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json(err);
-      });
-  });
+    .then((dbPostData) => res.json(dbPostData))
+    .catch((err) => {
+      console.log(err);
+      res.status(400).json(err);
+    });
+});
 
 router.put("/:id", (req, res) => {
   Post.update(
